@@ -9,6 +9,9 @@ from profiles_api import serializers
 from profiles_api import models
 from profiles_api import permissions
 
+#for login api viewset
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.settings import api_settings
 
 # Create your views here.
 class HelloApiView(APIView):
@@ -119,3 +122,13 @@ class UserProfileViewSet(viewsets.ModelViewSet):
     #search profile
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name', 'email',)
+
+
+class UserLoginApiView(ObtainAuthToken):
+    """Handle creating user authentication tokens"""
+    # ObtainAuthToken is handy and we could add it directly to the urls.py
+    # however it doesnt by default enable itself in the browsable django admin site
+    # so we need to customise this class to make it browsable api to make easy for us to test
+    renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES
+
+     
