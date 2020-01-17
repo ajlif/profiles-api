@@ -4,6 +4,9 @@ from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
 from django.contrib.auth.models import BaseUserManager
 
+# profile feed : import settings to retrieve the AUTH_USER_MODEL
+from django.conf import settings
+
 
 class UserProfileManager(BaseUserManager):
     """Manager for user profiles"""
@@ -30,6 +33,7 @@ class UserProfileManager(BaseUserManager):
 
         return user
 
+
 # this class inherit from AbstractBaseUser & PermissionsMixin
 class UserProfile(AbstractBaseUser, PermissionsMixin):
     """Database model for users"""
@@ -40,10 +44,10 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
 
     objects = UserProfileManager()
 
-    #ovveride the default username CharField ( it is required by default),
+    # ovveride the default username CharField ( it is required by default),
     # we should also customize the UserProfileManager
     USERNAME_FIELD = 'email'
-    #additional required field
+    # additional required field
     REQUIRED_FIELDS = ['name']
 
     def get_fulll_name(self):
@@ -57,3 +61,20 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         """Retrieve string representation of the user"""
         return self.email
+
+
+class ProfileFeedItem(models.Model):
+    """Profile status update"""
+    # best practice : use AUTH_USER_MODEL and not directly UserProfile because if we want to switch out our model and we
+    # use the default django auth model ,we should chage manually the name of the model in the foreignKey every where we
+    # referenced it, however with this best.p we should only change AUTH_USER_MODEL in settings
+    user_profile = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE
+    )
+    status_text = models.CharField(max_length=255)
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        """Return the model as string"""
+        return self.status_text

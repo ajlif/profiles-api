@@ -9,9 +9,11 @@ from profiles_api import serializers
 from profiles_api import models
 from profiles_api import permissions
 
-#for login api viewset
+# for login api viewset
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.settings import api_settings
+# permission : make the vieset readonly if the user is not authenticated
+from rest_framework.permissions import IsAuthenticated
 
 # Create your views here.
 class HelloApiView(APIView):
@@ -108,7 +110,8 @@ class HelloViewSet(viewsets.ViewSet):
 
         return Response({'http_method': 'DELETE'})
 
-#ModelViewSet : managing models throgh our api
+
+# ModelViewSet : managing models throgh our api
 # viewset access the serializer through an endpoint
 class UserProfileViewSet(viewsets.ModelViewSet):
     """Handle creating and updating profiles"""
@@ -131,4 +134,28 @@ class UserLoginApiView(ObtainAuthToken):
     # so we need to customise this class to make it browsable api to make easy for us to test
     renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES
 
-     
+
+class UserProfileFeedViewSet(viewsets.ModelViewSet):
+    """Handles creating , reading and updating profile feed items"""
+    # authentication
+    authentication_classes = (TokenAuthentication,)
+    # set the serializer class of this viewset to ProfileFeedItemSerializer
+    serializer_class = serializers.ProfileFeedItemSerializer
+    queryset = models.ProfileFeedItem.objects.all()
+
+    # add permissions
+    permission_classes = (
+        permissions.UpdateOwnStatus,
+        IsAuthenticated
+    )
+
+    # customise the behaviour for creating object over the viewset.
+    # get called every time we make http post to viewset
+    def perform_create(self, serializer):
+        """sets the user profile to the logged in user"""
+        # adding TokenAuthentication to the viewset :if the user is autheticated than the user is associated in the req
+        # save fn of the serializer : save content of the object in the db.
+        # user_profile will be passed in addition to all the item of the serializer
+        serializer.save(user_profile = self.request.user)
+
+
